@@ -32,6 +32,7 @@ services:
     build:
       context: docker/php-cli
       dockerfile: Dockerfile
+    user: "${UID}:${GID}"
     volumes:
     - ./:/var/www
     links:

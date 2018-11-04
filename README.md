@@ -1,3 +1,22 @@
+Up: 
+```
+UID=${UID} GID=${GID} docker-compose up -d
+```
+
+Or, export these variables as environment variables, ignoring bash: UID: readonly variable
+```
+export UID=${UID}
+export GID=${GID} 
+```
+
+ALIASES:
+```
+alias tf='docker-compose exec php-cli vendor/bin/phpunit --filter'
+alias art='docker-compose exec php-cli php artisan'
+alias dphp='docker-compose exec php-cli'
+```
+
+
 ##### For using Laravel echo server, add the following sections 
 ```
 // to layout.blade.php, before <script src="{{ asset('app.js') }}"></script>
