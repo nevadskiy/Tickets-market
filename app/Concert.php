@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Concert extends Model
@@ -25,5 +26,10 @@ class Concert extends Model
     public function getTicketPriceInDollarsAttribute()
     {
         return number_format($this->ticket_price / 100, 2);
+    }
+
+    public function scopePublished(Builder $query)
+    {
+        return $query->whereNotNull('published_at');
     }
 }

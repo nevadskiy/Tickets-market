@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Concert;
 use Carbon\Carbon;
 use Tests\TestCase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ViewConcertListingTest extends TestCase
@@ -13,11 +12,11 @@ class ViewConcertListingTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    function user_can_view_a_concert_listing()
+    function user_can_view_a_published_concert_listing()
     {
         /** Arrange */
         // Create a concert
-        $concert = Concert::create([
+        $concert = factory(Concert::class)->state('published')->create([
             'title' => 'The Red Chord',
             'subtitle' => 'with Animosity and Lethargy',
             'date' => Carbon::parse('December 13, 2018 8:00pm'),
@@ -27,7 +26,7 @@ class ViewConcertListingTest extends TestCase
             'city' => 'Laraville',
             'state' => 'ON',
             'zip' => '17916',
-            'additional_information' => 'For ticket, call (555) 555-5555.'
+            'additional_information' => 'For ticket, call (555) 555-5555.',
         ]);
 
         /** Art */
@@ -50,9 +49,9 @@ class ViewConcertListingTest extends TestCase
     /** @test */
     function user_cannot_view_unpublished_concert_listing()
     {
-        $concert = factory(Concert::class)->create([
-            'published_at' => null
-        ]);
+        $this->withExceptionHandling();
+
+        $concert = factory(Concert::class)->state('unpublished')->create();
 
         $this->get('/concerts/' . $concert->id)
             ->assertStatus(404);

@@ -19,3 +19,15 @@ $factory->define(Concert::class, function (Faker $faker) {
         'additional_information' => 'Some sample additional information'
     ];
 });
+
+$factory->state(Concert::class, 'published', function (Faker $faker) {
+    return [
+        'published_at' => Carbon::parse('-1 week')
+    ];
+});
+
+$factory->state(Concert::class, 'unpublished', function (Faker $faker) {
+    return [
+        'published_at' => null,
+    ];
+});
