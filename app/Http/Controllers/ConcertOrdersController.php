@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Billing\PaymentFailedException;
 use App\Billing\PaymentGateway;
 use App\Concert;
+use App\Exceptions\NotEnoughTicketsException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class ConcertOrdersController extends Controller
 {
@@ -21,19 +24,31 @@ class ConcertOrdersController extends Controller
     {
         $this->paymentGateway = $paymentGateway;
     }
-    
+
     public function store(Request $request, Concert $concert)
     {
+        if (!$concert->isPublished()) {
+            return response()->json([], Response::HTTP_NOT_FOUND);
+        }
+
         $this->validate($request, [
             'email' => ['required', 'email'],
             'ticket_quantity' => ['required', 'integer', 'min:1'],
             'payment_token' => 'required'
         ]);
 
-        $this->paymentGateway->charge($request['ticket_quantity'] * $concert->ticket_price, $request['payment_token']);
+        try {
+            $amount = $request['ticket_quantity'] * $concert->ticket_price;
 
-        $concert->orderTickets($request['email'], $request['ticket_quantity']);
+            $order = $concert->orderTickets($request['email'], $request['ticket_quantity']);
+            $this->paymentGateway->charge($amount, $request['payment_token']);
 
-        return response()->json([], 201);
+            return response()->json([], Response::HTTP_CREATED);
+        } catch (PaymentFailedException $e) {
+            $order->cancel();
+            return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+        } catch (NotEnoughTicketsException $e) {
+            return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
     }
 }
