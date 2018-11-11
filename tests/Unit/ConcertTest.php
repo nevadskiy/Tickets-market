@@ -64,7 +64,7 @@ class ConcertTest extends TestCase
         $order = $concert->orderTickets('jane@example.com', 3);
 
         $this->assertEquals('jane@example.com', $order->email);
-        $this->assertEquals(3, $order->ticketsQuantity());
+        $this->assertEquals(3, $order->ticketQuantity());
     }
 
     /** @test */
