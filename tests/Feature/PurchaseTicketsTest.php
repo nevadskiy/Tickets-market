@@ -97,6 +97,41 @@ class PurchaseTicketsTest extends TestCase
     }
 
     /** @test */
+    function cannot_purchase_tickets_another_customer_is_already_trying_to_purchase()
+    {
+        $this->withoutExceptionHandling();
+
+        $concert = factory(Concert::class)->state('published')->create([
+            'ticket_price' => 12000
+        ])->addTickets(3);
+
+        // Before first call charge
+        $this->paymentGateway->beforeFirstCharge(function ($paymentGateway) use ($concert) {
+            $response = $this->orderTickets($concert, [
+                'email' => 'jane@example.com',
+                'ticket_quantity' => 3,
+                'payment_token' => $this->paymentGateway->getValidTestToken(),
+            ]);
+
+            $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+            $this->assertFalse($concert->hasOrderFor('jane@example.com'));
+            $this->assertEquals(0, $this->paymentGateway->totalCharges());
+        });
+
+        // First call charge (call the callback here)
+        $response = $this->orderTickets($concert, [
+            'email' => 'john@example.com',
+            'ticket_quantity' => 3,
+            'payment_token' => $this->paymentGateway->getValidTestToken(),
+        ]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $this->assertEquals(9750, $this->paymentGateway->totalCharges());
+        $this->assertTrue($concert->hasOrderFor('john@example.com'));
+        $this->assertEquals(3, $concert->ordersFor('john@example.com')->first()->ticketQuantity());
+    }
+
+    /** @test */
     function an_order_is_not_created_if_payment_fails()
     {
         $this->withoutExceptionHandling();

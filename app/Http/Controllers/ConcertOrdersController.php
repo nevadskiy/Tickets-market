@@ -7,6 +7,7 @@ use App\Billing\PaymentGateway;
 use App\Concert;
 use App\Exceptions\NotEnoughTicketsException;
 use App\Order;
+use App\Reservation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -40,10 +41,11 @@ class ConcertOrdersController extends Controller
 
         try {
             $tickets = $concert->findTickets($request['ticket_quantity']);
+            $reservation = new Reservation($tickets);
 
-            $this->paymentGateway->charge($request['ticket_quantity'] * $concert->ticket_price, $request['payment_token']);
+            $this->paymentGateway->charge($reservation->totalCost(), $request['payment_token']);
 
-            $order = Order::forTickets($tickets, $request['email']);
+            $order = Order::forTickets($tickets, $request['email'], $reservation->totalCost());
 
             return response()->json($order, Response::HTTP_CREATED);
         } catch (PaymentFailedException $e) {
