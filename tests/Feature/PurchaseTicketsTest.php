@@ -101,34 +101,32 @@ class PurchaseTicketsTest extends TestCase
     {
         $this->withoutExceptionHandling();
 
-        $concert = factory(Concert::class)->state('published')->create([
-            'ticket_price' => 12000
-        ])->addTickets(3);
+        $concert = factory(Concert::class)->state('published')->create(['ticket_price' => 3250])->addTickets(3);
 
         // Before first call charge
         $this->paymentGateway->beforeFirstCharge(function ($paymentGateway) use ($concert) {
             $response = $this->orderTickets($concert, [
-                'email' => 'jane@example.com',
-                'ticket_quantity' => 3,
+                'email' => 'b@example.com',
+                'ticket_quantity' => 1,
                 'payment_token' => $this->paymentGateway->getValidTestToken(),
             ]);
 
             $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
-            $this->assertFalse($concert->hasOrderFor('jane@example.com'));
+            $this->assertFalse($concert->hasOrderFor('b@example.com'));
             $this->assertEquals(0, $this->paymentGateway->totalCharges());
         });
 
         // First call charge (call the callback here)
         $response = $this->orderTickets($concert, [
-            'email' => 'john@example.com',
+            'email' => 'a@example.com',
             'ticket_quantity' => 3,
             'payment_token' => $this->paymentGateway->getValidTestToken(),
         ]);
 
         $response->assertStatus(Response::HTTP_CREATED);
         $this->assertEquals(9750, $this->paymentGateway->totalCharges());
-        $this->assertTrue($concert->hasOrderFor('john@example.com'));
-        $this->assertEquals(3, $concert->ordersFor('john@example.com')->first()->ticketQuantity());
+        $this->assertTrue($concert->hasOrderFor('a@example.com'));
+        $this->assertEquals(3, $concert->ordersFor('a@example.com')->first()->ticketQuantity());
     }
 
     /** @test */
@@ -146,6 +144,7 @@ class PurchaseTicketsTest extends TestCase
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
         $this->assertFalse($concert->hasOrderFor('john@example.com'));
+        $this->assertEquals(3, $concert->ticketsRemaining('john@example.com'));
     }
 
     /** @test */

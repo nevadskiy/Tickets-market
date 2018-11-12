@@ -11,12 +11,12 @@ class Ticket extends Model
 
     public function scopeAvailable($query)
     {
-        return $query->whereNull('order_id');
+        return $query->whereNull('order_id')->whereNull('reserved_at');
     }
 
     public function release()
     {
-        $this->update(['order_id' => null]);
+        $this->update(['reserved_at' => null]);
     }
 
     public function reserve()
