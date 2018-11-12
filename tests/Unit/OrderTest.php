@@ -4,6 +4,8 @@ namespace Tests\Unit;
 
 use App\Concert;
 use App\Order;
+use App\Reservation;
+use App\Ticket;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -38,5 +40,20 @@ class OrderTest extends TestCase
             'ticket_quantity' => 5,
             'amount' => 6000
         ], $result);
+    }
+
+    /** @test */
+    function creating_an_order_from_a_reservation()
+    {
+        $concert = factory(Concert::class)->create(['ticket_price' => 1200]);
+        $tickets = factory(Ticket::class, 3)->create(['concert_id' => $concert->id]);
+
+        $reservation = new Reservation($tickets, 'jane@example.com');
+
+        $order = Order::fromReservation($reservation);
+
+        $this->assertEquals('jane@example.com', $order->email);
+        $this->assertEquals(3, $order->ticketQuantity());
+        $this->assertEquals(3600, $order->amount);
     }
 }
