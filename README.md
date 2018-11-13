@@ -11,7 +11,9 @@ export GID=${GID}
 
 ALIASES:
 ```
+alias te='docker-compose exec php-cli vendor/bin/phpunit --exclude-group'
 alias tf='docker-compose exec php-cli vendor/bin/phpunit --filter'
+alias ta='docker-compose exec php-cli vendor/bin/phpunit'
 alias art='docker-compose exec php-cli php artisan'
 alias dphp='docker-compose exec php-cli'
 ```
