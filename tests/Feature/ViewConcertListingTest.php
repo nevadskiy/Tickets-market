@@ -35,6 +35,7 @@ class ViewConcertListingTest extends TestCase
 
         /** Assert */
         // See the concert
+        $response->assertOk();
         $response->assertSee('The Red Chord');
         $response->assertSee('with Animosity and Lethargy');
         $response->assertSee('December 13, 2018');
