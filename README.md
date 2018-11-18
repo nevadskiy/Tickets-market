@@ -11,11 +11,23 @@ export GID=${GID}
 
 ALIASES:
 ```
+alias t='docker-compose exec php-cli vendor/bin/phpunit'
 alias te='docker-compose exec php-cli vendor/bin/phpunit --exclude-group'
 alias tf='docker-compose exec php-cli vendor/bin/phpunit --filter'
 alias ta='docker-compose exec php-cli vendor/bin/phpunit'
 alias art='docker-compose exec php-cli php artisan'
 alias dphp='docker-compose exec php-cli'
+```
+TRICKS:
+
+- Without long tests suite from integration with third party API services
+```
+vendor/bin/phpunit --exclude-group integration 
+```
+
+- Stop tests on first failure for easier fixing multiple broken tests 
+```
+vendor/bin/phpunit --stop-on-failure 
 ```
 
 
