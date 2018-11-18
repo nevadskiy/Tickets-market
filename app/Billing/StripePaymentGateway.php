@@ -2,12 +2,14 @@
 
 namespace App\Billing;
 
-use Stripe\Charge;
+use Stripe\Charge as StripeCharge;
 use Stripe\Token;
 use Stripe\Error\InvalidRequest;
 
 class StripePaymentGateway implements PaymentGateway
 {
+    public const TEST_CARD_NUMBER = '4242424242424242';
+
     private $apiKey;
 
     public function __construct($apiKey)
@@ -18,11 +20,16 @@ class StripePaymentGateway implements PaymentGateway
     public function charge($amount, $token)
     {
         try {
-            Charge::create([
+            $data = StripeCharge::create([
                 'amount' => $amount,
                 'source' => $token,
                 'currency' => 'usd',
             ], ['api_key' => $this->apiKey]);
+
+            return new Charge([
+                'amount' => $data['amount'],
+                'card_last_four' => $data['source']['last4'],
+            ]);
         } catch (InvalidRequest $e) {
             throw new PaymentFailedException;
         }
@@ -31,13 +38,14 @@ class StripePaymentGateway implements PaymentGateway
     /**
      * Return ID of card (card token)
      *
+     * @param string $cardNumber
      * @return mixed|null
      */
-    public function getValidTestToken()
+    public function getValidTestToken($cardNumber = self::TEST_CARD_NUMBER)
     {
         return Token::create([
             'card' => [
-                'number' => '4242424242424242',
+                'number' => $cardNumber,
                 'exp_month' => 1,
                 'exp_year' => date('Y') + 1,
                 'cvc' => '123'
@@ -51,12 +59,17 @@ class StripePaymentGateway implements PaymentGateway
 
         $callback($this);
 
-        return $this->recentChargesSince($latestCharge)->pluck('amount');
+        return $this->recentChargesSince($latestCharge)->map(function ($data) {
+            return new Charge([
+                'amount' => $data['amount'],
+                'card_last_four' => $data['source']['last4'],
+            ]);
+        });
     }
 
     private function lastCharge()
     {
-        return Charge::all([
+        return StripeCharge::all([
             'limit' => 1,
         ], [
             'api_key' => $this->apiKey
@@ -65,7 +78,7 @@ class StripePaymentGateway implements PaymentGateway
 
     private function recentChargesSince($charge = null)
     {
-        $recentCharges = Charge::all([
+        $recentCharges = StripeCharge::all([
             'ending_before' => $charge ? $charge->id : null,
         ], [
             'api_key' => $this->apiKey

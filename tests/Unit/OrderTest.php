@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Billing\Charge;
 use App\Concert;
 use App\Order;
 use App\Reservation;
@@ -15,17 +16,16 @@ class OrderTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    function it_creates_an_order_from_tickets_email_and_amount()
+    function it_creates_an_order_from_tickets_email_and_charge()
     {
-        $concert = factory(Concert::class)->create()->addTickets(5);
-        $this->assertEquals(5, $concert->ticketsRemaining());
+        $tickets = factory(Ticket::class, 3)->create();
+        $charge = new Charge(['amount' => 3600, 'card_last_four' => '1234']);
 
-        $order = Order::forTickets($concert->findTickets(3), 'john@example.com', 3600);
+        $order = Order::forTickets($tickets, 'john@example.com', $charge);
 
         $this->assertEquals('john@example.com', $order->email);
         $this->assertEquals(3, $order->ticketQuantity());
-        $this->assertEquals(3600, $order->amount);
-        $this->assertEquals(2, $concert->ticketsRemaining());
+        $this->assertEquals('1234', $order->card_last_four);
     }
 
     /** @test */
@@ -51,12 +51,17 @@ class OrderTest extends TestCase
     /** @test */
     function it_converts_to_an_array()
     {
-        $concert = factory(Concert::class)->create(['ticket_price' => 1200])->addTickets(5);
-        $order = $concert->orderTickets('jane@example.com', 5);
+        $order = factory(Order::class)->create([
+            'email' => 'jane@example.com',
+            'confirmation_number' => 'ORDERCONFIRMATION1234',
+            'amount' => 6000
+        ]);
+        $order->tickets()->saveMany(factory(Ticket::class)->times(5)->make());
 
         $result = $order->toArray();
 
         $this->assertEquals([
+            'confirmation_number' => 'ORDERCONFIRMATION1234',
             'email' => 'jane@example.com',
             'ticket_quantity' => 5,
             'amount' => 6000

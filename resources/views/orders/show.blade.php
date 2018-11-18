@@ -20,7 +20,7 @@
                                     <time datetime="{{ $ticket->concert->date->format('Y-m-d H:i') }}">
                                         <p>Date: {{ $ticket->concert->date->format('l, F j, Y') }}</p>
                                     </time>
-                                    <p>Doors at {{ $ticket->concert->date->format('g:ia') }}</p>
+                                    <p>Doors at {{ $ticket->concert->formatted_start_time }}</p>
                                     <hr>
                                 @endforeach
                             </div>

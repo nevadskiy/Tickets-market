@@ -25,6 +25,11 @@ TRICKS:
 vendor/bin/phpunit --exclude-group integration 
 ```
 
+- Don't exclude group 
+```
+vendor/bin/phpunit --exclude-group none
+```
+
 - Stop tests on first failure for easier fixing multiple broken tests 
 ```
 vendor/bin/phpunit --stop-on-failure 

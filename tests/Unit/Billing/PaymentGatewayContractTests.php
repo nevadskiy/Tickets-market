@@ -18,7 +18,18 @@ trait PaymentGatewayContractTests
         });
 
         $this->assertCount(1, $recentCharges);
-        $this->assertEquals(2500, $recentCharges->sum());
+        $this->assertEquals(2500, $recentCharges->map->amount()->sum());
+    }
+
+    /** @test */
+    function can_get_details_about_a_successful_charge()
+    {
+        $paymentGateway = $this->getPaymentGateway();
+
+        $charge = $paymentGateway->charge(2500, $paymentGateway->getValidTestToken($paymentGateway::TEST_CARD_NUMBER));
+
+        $this->assertEquals(substr($paymentGateway::TEST_CARD_NUMBER, -4), $charge->cardLastFour());
+        $this->assertEquals(2500, $charge->amount());
     }
 
     /** @test */
@@ -35,7 +46,7 @@ trait PaymentGatewayContractTests
         });
 
         $this->assertCount(2, $recentCharges);
-        $this->assertEquals([4000, 5000], $recentCharges->all());
+        $this->assertEquals([4000, 5000], $recentCharges->map->amount()->all());
     }
 
     /** @test */
