@@ -61,7 +61,6 @@ class PurchaseTicketsTest extends TestCase
         $response->assertJsonFragment([
             'confirmation_number' => 'ORDERCONFIRMATION1234',
             'email' => 'john@example.com',
-            'ticket_quantity' => 3,
             'amount' => 9750,
             'tickets' => [
                 ['code' => 'TICKETCODE1'],

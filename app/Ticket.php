@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Facades\TicketCode;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -32,5 +33,11 @@ class Ticket extends Model
     public function getPriceAttribute()
     {
         return $this->concert->ticket_price;
+    }
+
+    public function claimFor(Order $order)
+    {
+        $this->code = TicketCode::generate();
+        $order->tickets()->save($this);
     }
 }
