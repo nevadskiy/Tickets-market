@@ -37,9 +37,11 @@ class ConcertOrdersController extends Controller
         try {
             $reservation = $concert->reserveTickets($request['ticket_quantity'], $request['email']);
             $order = $reservation->complete($this->paymentGateway, $request['payment_token']);
+
             return response()->json($order, Response::HTTP_CREATED);
         } catch (PaymentFailedException $e) {
             $reservation->cancel();
+
             return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);
         } catch (NotEnoughTicketsException $e) {
             return response()->json([], Response::HTTP_UNPROCESSABLE_ENTITY);

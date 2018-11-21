@@ -6,6 +6,7 @@ use App\Billing\FakePaymentGateway;
 use App\Billing\PaymentGateway;
 use App\Concert;
 use App\Facades\OrderConfirmationNumber;
+use App\Facades\TicketCode;
 use App\OrderConfirmationNumberGenerator;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
@@ -43,6 +44,8 @@ class PurchaseTicketsTest extends TestCase
     /** @test */
     function customer_can_purchase_tickets_to_a_published_concert()
     {
+        $this->withoutExceptionHandling();
+
         $concert = factory(Concert::class)->state('published')->create(['ticket_price' => 3250])->addTickets(3);
 
         // THE SAME LIKE ONE-LINE COMMAND BELOW THAT WORKS WITH ANY FACADE
@@ -52,11 +55,15 @@ class PurchaseTicketsTest extends TestCase
         // $this->app->instance(OrderConfirmationNumberGenerator::class, $orderConfirmationNumberGenerator);
         OrderConfirmationNumber::shouldReceive('generate')->andReturn('ORDERCONFIRMATION1234');
 
+        TicketCode::shouldReceive('generateFor')->andReturn('TICKETCODE1', 'TICKETCODE2', 'TICKETCODE3');
+
         $response = $this->orderTickets($concert, [
             'email' => 'john@example.com',
             'ticket_quantity' => 3,
             'payment_token' => $this->paymentGateway->getValidTestToken(),
         ]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
 
         $response->assertJsonFragment([
             'confirmation_number' => 'ORDERCONFIRMATION1234',
