@@ -18,9 +18,20 @@ class OrderConfirmationEmailTest extends TestCase
 
         $mail = new OrderConfirmationEmail($order);
 
+        // Also available from laravel 5.5 $rendered = $email->render() method
         $rendered = $this->render($mail);
 
         $this->assertContains(url('/orders/ORDERCONFIRMATION1234'), $rendered);
+    }
+
+    /** @test */
+    function it_has_a_subject()
+    {
+        $order = factory(Order::class)->make();
+
+        $email = new OrderConfirmationEmail($order);
+
+        $this->assertEquals('Your Ticket Order', $email->build()->subject);
     }
 
     private function render($mailable)
