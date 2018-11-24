@@ -30,6 +30,7 @@ class PurchaseTicketsTest extends TestCase
 
         $this->paymentGateway = new FakePaymentGateway;
         $this->app->instance(PaymentGateway::class, $this->paymentGateway);
+        Mail::fake();
     }
 
     private function orderTickets($concert, $params)
@@ -46,8 +47,6 @@ class PurchaseTicketsTest extends TestCase
     /** @test */
     function customer_can_purchase_tickets_to_a_published_concert()
     {
-        Mail::fake();
-
         $concert = factory(Concert::class)->state('published')->create(['ticket_price' => 3250])->addTickets(3);
 
         // THE SAME LIKE ONE-LINE COMMAND BELOW THAT WORKS WITH ANY FACADE
