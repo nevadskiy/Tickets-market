@@ -12,6 +12,14 @@ class PromoterLoginTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
+    function showing_the_login_form()
+    {
+        $response = $this->get('/login');
+
+        $response->assertOk();
+    }
+
+    /** @test */
     function logging_in_with_valid_credentials()
     {
         $user = factory(User::class)->create([
