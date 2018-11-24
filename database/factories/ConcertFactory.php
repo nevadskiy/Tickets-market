@@ -1,6 +1,7 @@
 <?php
 
 use App\Concert;
+use App\User;
 use Carbon\Carbon;
 use Faker\Generator as Faker;
 
@@ -8,6 +9,9 @@ use Faker\Generator as Faker;
 $factory->define(Concert::class, function (Faker $faker) {
     return [
         'title' => 'Example band',
+        'user_id' => function () {
+            return factory(User::class)->create()->id;
+        },
         'subtitle' => 'with The fake Openers',
         'date' => Carbon::parse('+2 weeks'),
         'ticket_price' => 2000,

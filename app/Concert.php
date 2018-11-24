@@ -14,6 +14,11 @@ class Concert extends Model
         'date' => 'datetime'
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function getFormattedDateAttribute()
     {
         return $this->date->format('F j, Y');
@@ -36,7 +41,12 @@ class Concert extends Model
 
     public function isPublished()
     {
-        return $this->published_at !== null && $this->published_at < now();
+        return $this->published_at !== null && $this->published_at <= $this->freshTimestamp();
+    }
+
+    public function publish()
+    {
+        return $this->update(['published_at' => $this->freshTimestamp()]);
     }
 
     public function orders()

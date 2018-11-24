@@ -32,6 +32,24 @@ class AddConcertTest extends TestCase
         return $this;
     }
 
+    private function validAttributes($overrides = [])
+    {
+        return array_merge([
+            'title' => 'No Warning',
+            'subtitle' => 'with Cruel Hand and Backtrack',
+            'additional_information' => 'You must be 19 years of age to attend this concert.',
+            'date' => '2018-11-18',
+            'time' => '8:00pm',
+            'venue' => 'The Mosh Pit',
+            'venue_address' => '123 Fake St.',
+            'city' => 'Laraville',
+            'state' => 'ON',
+            'zip' => '12345',
+            'ticket_price' => '32.50',
+            'ticket_quantity' => '75',
+        ], $overrides);
+    }
+
     /** @test */
     function promoters_can_view_the_add_concert_form()
     {
@@ -49,9 +67,11 @@ class AddConcertTest extends TestCase
     }
 
     /** @test */
-    function adding_a_valid_concert()
+    function promoters_can_add_a_valid_concert()
     {
-        $this->actingAs(factory(User::class)->create());
+        $this->withoutExceptionHandling();
+
+        $this->actingAs($user = factory(User::class)->create());
 
         $response = $this->post('/backstage/concerts', [
             'title' => 'No Warning',
@@ -70,7 +90,10 @@ class AddConcertTest extends TestCase
 
         $concert = Concert::first();
 
+
         $this->assertNotNull($concert);
+        $this->assertTrue($concert->user->is($user));
+        $this->assertTrue($concert->isPublished());
         $response->assertRedirect("/concerts/{$concert->id}");
         $this->assertEquals('No Warning', $concert->title);
         $this->assertEquals('with Cruel Hand and Backtrack', $concert->subtitle);
@@ -88,20 +111,7 @@ class AddConcertTest extends TestCase
     /** @test */
     function guests_cannot_add_new_concerts()
     {
-        $response = $this->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        $response = $this->post('/backstage/concerts', $this->validAttributes());
 
         $response->assertStatus(302)->assertRedirect('/login');
         $this->assertEquals(0, Concert::count());
@@ -114,22 +124,10 @@ class AddConcertTest extends TestCase
 
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => '',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
+            'title' => ''
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('title');
@@ -138,75 +136,36 @@ class AddConcertTest extends TestCase
     /** @test */
     function subtitle_is_optional()
     {
-        $this->actingAs(factory(User::class)->create());
+        $this->actingAs($user = factory(User::class)->create());
 
-        $response = $this->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => '',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        $response = $this->post('/backstage/concerts', $this->validAttributes([
+            'subtitle' => ''
+        ]));
 
-        $concert = Concert::first();
 
-        $this->assertNotNull($concert);
+        $this->assertNotNull($concert = Concert::first());
+        $this->assertTrue($concert->user->is($user));
         $response->assertRedirect("/concerts/{$concert->id}");
-        $this->assertEquals('No Warning', $concert->title);
         $this->assertNull($concert->subtitle);
-        $this->assertEquals('You must be 19 years of age to attend this concert.', $concert->additional_information);
-        $this->assertEquals(Carbon::parse('2018-11-18 8:00pm'), $concert->date);
-        $this->assertEquals('The Mosh Pit', $concert->venue);
-        $this->assertEquals('123 Fake St.', $concert->venue_address);
-        $this->assertEquals('Laraville', $concert->city);
-        $this->assertEquals('ON', $concert->state);
-        $this->assertEquals('12345', $concert->zip);
-        $this->assertEquals(3250, $concert->ticket_price);
-        $this->assertEquals(75, $concert->ticketsRemaining());
     }
 
     /** @test */
     function additional_information_is_optional()
     {
-        $this->actingAs(factory(User::class)->create());
+        $this->actingAs($user = factory(User::class)->create());
 
-        $response = $this->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
+        $response = $this->post('/backstage/concerts', $this->validAttributes([
             'additional_information' => '',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
         $concert = Concert::first();
 
+        $this->assertTrue($concert->user->is($user));
         $this->assertNotNull($concert);
         $response->assertRedirect("/concerts/{$concert->id}");
         $this->assertEquals('No Warning', $concert->title);
         $this->assertEquals('with Cruel Hand and Backtrack', $concert->subtitle);
         $this->assertNull($concert->additional_information);
-        $this->assertEquals(Carbon::parse('2018-11-18 8:00pm'), $concert->date);
-        $this->assertEquals('The Mosh Pit', $concert->venue);
-        $this->assertEquals('123 Fake St.', $concert->venue_address);
-        $this->assertEquals('Laraville', $concert->city);
-        $this->assertEquals('ON', $concert->state);
-        $this->assertEquals('12345', $concert->zip);
-        $this->assertEquals(3250, $concert->ticket_price);
-        $this->assertEquals(75, $concert->ticketsRemaining());
     }
 
     /** @test */
@@ -214,22 +173,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'time' => 'invalid-time',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('time');
@@ -240,22 +187,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'date' => 'invalid-date',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('date');
@@ -266,22 +201,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'venue' => '',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('venue');
@@ -292,22 +215,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'city' => '',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('city');
@@ -318,22 +229,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'zip' => '',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('zip');
@@ -344,22 +243,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'state' => '',
-            'zip' => '12345',
-            'ticket_price' => '32.50',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('state');
@@ -370,22 +257,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'ticket_price' => '',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('ticket_price');
@@ -396,22 +271,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'ticket_price' => 'not numeric price',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('ticket_price');
@@ -422,22 +285,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'ticket_price' => '4.99',
-            'ticket_quantity' => '75',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('ticket_price');
@@ -448,22 +299,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '35.00',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'ticket_quantity' => '',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('ticket_quantity');
@@ -474,22 +313,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '35.00',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'ticket_quantity' => 'not a numeric quantity',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('ticket_quantity');
@@ -500,22 +327,10 @@ class AddConcertTest extends TestCase
     {
         $this->actingAs(factory(User::class)->create());
 
-        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', [
-            'title' => 'No Warning',
-            'subtitle' => 'with Cruel Hand and Backtrack',
-            'additional_information' => 'You must be 19 years of age to attend this concert.',
-            'date' => '2018-11-18',
-            'time' => '8:00pm',
-            'venue' => 'The Mosh Pit',
-            'venue_address' => '123 Fake St.',
-            'city' => 'Laraville',
-            'state' => 'ON',
-            'zip' => '12345',
-            'ticket_price' => '35.00',
+        $response = $this->from('/backstage/concerts/create')->post('/backstage/concerts', $this->validAttributes([
             'ticket_quantity' => '0',
-        ]);
+        ]));
 
-        $response->assertStatus(302);
         $response->assertRedirect('/backstage/concerts/create');
         $this->assertEquals(0, Concert::count());
         $response->assertSessionHasErrors('ticket_quantity');

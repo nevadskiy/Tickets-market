@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers\Backstage;
 
-use App\Concert;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Auth;
 
 class ConcertsController extends Controller
 {
@@ -32,7 +31,7 @@ class ConcertsController extends Controller
             'additional_information' => ['nullable'],
         ]);
 
-        $concert = Concert::create([
+        $concert = Auth::user()->concerts()->create([
             'title' => $request->get('title'),
             'subtitle' => $request->get('subtitle'),
             'date' => Carbon::parse(vsprintf('%s %s', [
@@ -46,6 +45,8 @@ class ConcertsController extends Controller
             'zip' => $request->get('zip'),
             'additional_information' => $request->get('additional_information'),
         ])->addTickets($request->get('ticket_quantity'));
+
+        $concert->publish();
 
         return redirect()->route('concerts.show', $concert);
     }
