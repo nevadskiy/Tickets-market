@@ -40,14 +40,4 @@ abstract class DuskTestCase extends BaseTestCase
             )
         );
     }
-
-    /**
-     * Determine the application's base URL.
-     *
-     * @return string
-     */
-    protected function baseUrl()
-    {
-        return 'http://nginx:80';
-    }
 }

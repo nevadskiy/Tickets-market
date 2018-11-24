@@ -12,7 +12,11 @@
 
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
-<body>
+<body class="d-flex flex-column" style="min-height: 100vh">
     @yield('body')
+
+    <footer class="mt-auto justify-content-center d-flex py-2">
+        Tickets &copy; 2018
+    </footer>
 </body>
 </html>
