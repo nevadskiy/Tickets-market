@@ -17,6 +17,6 @@ Route::group([
     Route::get('concerts/create', 'ConcertsController@create')->name('concerts.create');
     Route::get('concerts/{concert}/edit', 'ConcertsController@edit')->name('concerts.edit');
     Route::post('concerts', 'ConcertsController@store')->name('concerts.store');
+    Route::put('concerts/{id}', 'ConcertsController@update')->name('concerts.update');
 });
 
-Route::put('/backstage/concerts/{id}', 'Backstage\ConcertsController@update')->name('backstage.concerts.update');

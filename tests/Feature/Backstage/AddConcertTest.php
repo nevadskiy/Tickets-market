@@ -19,19 +19,6 @@ class AddConcertTest extends TestCase
         $this->withExceptionHandling();
     }
 
-    /**
-     * Set up the page where we came from
-     *
-     * @param string $url
-     * @return $this|TestCase
-     */
-    public function from($url)
-    {
-        session()->setPreviousUrl(url($url));
-
-        return $this;
-    }
-
     private function validAttributes($overrides = [])
     {
         return array_merge([
