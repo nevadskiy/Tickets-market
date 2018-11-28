@@ -2,16 +2,34 @@
 
 namespace App\Http\Controllers\Backstage;
 
+use App\Concert;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class ConcertsController extends Controller
 {
+    public function index()
+    {
+        return view('backstage.concerts.index', [
+            'concerts' => Auth::user()->concerts
+        ]);
+    }
+
     public function create()
     {
         // TODO: create form
+    }
+
+    public function edit($id)
+    {
+        $concert = Auth::user()->concerts()->findOrFail($id);
+
+        abort_if($concert->isPublished(), Response::HTTP_FORBIDDEN);
+
+        return view('backstage.concerts.edit', compact('concert'));
     }
 
     public function store(Request $request)
