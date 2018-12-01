@@ -1,6 +1,5 @@
 <?php
 
-use App\Concert;
 use Illuminate\Database\Seeder;
 
 class ConcertSeeder extends Seeder
@@ -12,6 +11,6 @@ class ConcertSeeder extends Seeder
      */
     public function run()
     {
-        factory(Concert::class)->state('published')->create()->addTickets(10);
+        ConcertFactory::createPublished(['ticket_quantity' => 10]);
     }
 }

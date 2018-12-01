@@ -8,11 +8,10 @@ use App\Concert;
 use App\Facades\OrderConfirmationNumber;
 use App\Facades\TicketCode;
 use App\Mail\OrderConfirmationEmail;
-use App\OrderConfirmationNumberGenerator;
+use ConcertFactory;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
-use Mockery;
 use Tests\TestCase;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -47,7 +46,7 @@ class PurchaseTicketsTest extends TestCase
     /** @test */
     function customer_can_purchase_tickets_to_a_published_concert()
     {
-        $concert = factory(Concert::class)->state('published')->create(['ticket_price' => 3250])->addTickets(3);
+        $concert = ConcertFactory::createPublished(['ticket_price' => 3250, 'ticket_quantity' => 3]);
 
         // THE SAME LIKE ONE-LINE COMMAND BELOW THAT WORKS WITH ANY FACADE
         // $orderConfirmationNumberGenerator = Mockery::mock(OrderConfirmationNumberGenerator::class, [
@@ -92,7 +91,9 @@ class PurchaseTicketsTest extends TestCase
     /** @test */
     function cannot_purchase_tickets_to_an_unpublished_concert()
     {
-        $concert = factory(Concert::class)->state('unpublished')->create()->addTickets(3);
+        $concert = factory(Concert::class)->state('unpublished')->create([
+            'ticket_quantity' => 3
+        ]);
 
         $response = $this->orderTickets($concert, [
             'email' => 'john@example.com',
@@ -110,7 +111,7 @@ class PurchaseTicketsTest extends TestCase
     {
         $this->withoutExceptionHandling();
 
-        $concert = factory(Concert::class)->state('published')->create()->addTickets(50);
+        $concert = ConcertFactory::createPublished(['ticket_quantity' => 50]);
 
         $response = $this->orderTickets($concert, [
             'email' => 'john@example.com',
@@ -129,7 +130,10 @@ class PurchaseTicketsTest extends TestCase
     {
         $this->withoutExceptionHandling();
 
-        $concert = factory(Concert::class)->state('published')->create(['ticket_price' => 3250])->addTickets(3);
+        $concert = ConcertFactory::createPublished([
+            'ticket_quantity' => 3,
+            'ticket_price' => 3250,
+        ]);
 
         // Before first call charge
         $this->paymentGateway->beforeFirstCharge(function ($paymentGateway) use ($concert) {
@@ -162,7 +166,7 @@ class PurchaseTicketsTest extends TestCase
     {
         $this->withoutExceptionHandling();
 
-        $concert = factory(Concert::class)->state('published')->create()->addTickets(3);
+        $concert = ConcertFactory::createPublished(['ticket_quantity' => 3]);
 
         $response = $this->orderTickets($concert, [
             'email' => 'john@example.com',
