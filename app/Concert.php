@@ -19,6 +19,11 @@ class Concert extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function attendeeMessages()
+    {
+        return $this->hasMany(AttendeeMessage::class);
+    }
+    
     public function getFormattedDateAttribute()
     {
         return $this->date->format('F j, Y');

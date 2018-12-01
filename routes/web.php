@@ -21,5 +21,8 @@ Route::group([
 
     Route::post('published-concerts', 'PublishedConcertsController@store')->name('published-concerts.store');
     Route::get('published-concerts/{id}/orders', 'PublishedConcertOrdersController@index')->name('published-concert-orders.index');
+
+    Route::get('concerts/{id}/messages/create', 'ConcertMessagesController@create')->name('concert-messages.create');
+    Route::post('concerts/{id}/messages', 'ConcertMessagesController@store')->name('concert-messages.store');
 });
 
