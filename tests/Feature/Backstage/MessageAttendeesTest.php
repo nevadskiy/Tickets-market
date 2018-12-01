@@ -3,9 +3,11 @@
 namespace Tests\Feature\Backstage;
 
 use App\AttendeeMessage;
+use App\Jobs\SendAttendeeMessage;
 use App\User;
 use ConcertFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class MessageAttendeesTest extends TestCase
@@ -52,6 +54,8 @@ class MessageAttendeesTest extends TestCase
     /** @test */
     function a_promoter_can_send_a_new_message()
     {
+        Queue::fake();
+
         $user = factory(User::class)->create();
         $concert = ConcertFactory::createPublished(['user_id' => $user->id]);
 
@@ -67,11 +71,17 @@ class MessageAttendeesTest extends TestCase
         $this->assertEquals($concert->id, $message->concert_id);
         $this->assertEquals('My subject', $message->subject);
         $this->assertEquals('My message', $message->message);
+
+        Queue::assertPushed(SendAttendeeMessage::class, function ($job) use ($message) {
+            return $job->message->is($message);
+        });
     }
 
     /** @test */
     function a_promoter_cannot_send_a_new_message_for_other_concerts()
     {
+        Queue::fake();
+
         $this->withExceptionHandling();
 
         $user = factory(User::class)->create();
@@ -85,11 +95,15 @@ class MessageAttendeesTest extends TestCase
 
         $response->assertNotFound();
         $this->assertEquals(0, AttendeeMessage::count());
+
+        Queue::assertNotPushed(SendAttendeeMessage::class);
     }
 
     /** @test */
     function a_guest_cannot_send_a_new_message_for_any_concerts()
     {
+        Queue::fake();
+
         $this->withExceptionHandling();
 
         $concert = ConcertFactory::createPublished();
@@ -101,11 +115,15 @@ class MessageAttendeesTest extends TestCase
 
         $response->assertRedirect('/login');
         $this->assertEquals(0, AttendeeMessage::count());
+
+        Queue::assertNotPushed(SendAttendeeMessage::class);
     }
 
     /** @test */
     function subject_is_required()
     {
+        Queue::fake();
+
         $this->withExceptionHandling();
 
         $user = factory(User::class)->create();
@@ -121,11 +139,15 @@ class MessageAttendeesTest extends TestCase
         $response->assertRedirect("/backstage/concerts/{$concert->id}/messages");
         $response->assertSessionHasErrors('subject');
         $this->assertEquals(0, AttendeeMessage::count());
+
+        Queue::assertNotPushed(SendAttendeeMessage::class);
     }
 
     /** @test */
     function message_is_required()
     {
+        Queue::fake();
+
         $this->withExceptionHandling();
 
         $user = factory(User::class)->create();
@@ -141,5 +163,7 @@ class MessageAttendeesTest extends TestCase
         $response->assertRedirect("/backstage/concerts/{$concert->id}/messages");
         $response->assertSessionHasErrors('message');
         $this->assertEquals(0, AttendeeMessage::count());
+
+        Queue::assertNotPushed(SendAttendeeMessage::class);
     }
 }
