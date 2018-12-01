@@ -81,6 +81,11 @@ class Concert extends Model
         return $this->tickets()->available()->count();
     }
 
+    public function ticketsSold()
+    {
+        return $this->tickets()->sold()->count();
+    }
+
     public function tickets()
     {
         return $this->hasMany(Ticket::class);
