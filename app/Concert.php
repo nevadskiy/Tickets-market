@@ -46,7 +46,10 @@ class Concert extends Model
 
     public function publish()
     {
-        return $this->update(['published_at' => $this->freshTimestamp()]);
+        $this->update(['published_at' => $this->freshTimestamp()]);
+        $this->addTickets($this->ticket_quantity);
+
+        return $this;
     }
 
     public function orders()
