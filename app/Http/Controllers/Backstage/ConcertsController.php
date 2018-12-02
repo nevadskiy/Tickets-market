@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Backstage;
 
 use App\Http\Controllers\Controller;
+use App\NullFile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ConcertsController extends Controller
 {
@@ -47,9 +49,10 @@ class ConcertsController extends Controller
             'ticket_price' => ['required', 'numeric', 'min:5'],
             'ticket_quantity' => ['required', 'integer', 'min:1'],
             'additional_information' => ['nullable'],
+            'poster_image' => ['nullable', 'image', Rule::dimensions()->minWidth(400)->ratio(8.5 / 11)],
         ]);
 
-        $concert = Auth::user()->concerts()->create([
+        Auth::user()->concerts()->create([
             'title' => $request->get('title'),
             'subtitle' => $request->get('subtitle'),
             'date' => Carbon::parse(vsprintf('%s %s', [
@@ -62,10 +65,11 @@ class ConcertsController extends Controller
             'state' => $request->get('state'),
             'zip' => $request->get('zip'),
             'additional_information' => $request->get('additional_information'),
-            'ticket_quantity' => $request->get('ticket_quantity')
+            'ticket_quantity' => $request->get('ticket_quantity'),
+            'poster_image_path' => $request->file('poster_image', new NullFile())->store('posters', 's3')
         ]);
 
-        return redirect()->route('concerts.show', $concert);
+        return redirect()->route('backstage.concerts.index');
     }
 
     public function update(Request $request, $id)
