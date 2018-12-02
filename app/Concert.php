@@ -14,6 +14,11 @@ class Concert extends Model
         'date' => 'datetime'
     ];
 
+    public function hasPoster()
+    {
+        return !! $this->poster_image_path;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
