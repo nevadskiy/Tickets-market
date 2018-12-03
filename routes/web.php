@@ -7,6 +7,9 @@ Route::get('orders/{confirmationNumber}', 'OrdersController@show');
 Route::get('login', 'Auth\LoginController@show')->name('login');
 Route::post('login', 'Auth\LoginController@login');
 
+Route::get('invitations/{code}', 'InvitationsController@show')->name('invitations.show');
+Route::post('register', 'Auth\RegisterController@register')->name('auth.register');
+
 Route::group([
     'middleware' => 'auth',
     'prefix' => 'backstage',
