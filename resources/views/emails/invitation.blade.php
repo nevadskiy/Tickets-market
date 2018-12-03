@@ -1,0 +1,1 @@
+{{ url("/invitations/{$invitation->code}") }}
