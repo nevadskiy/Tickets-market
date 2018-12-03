@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Support\Str;
 
-class RandomOrderConfirmationNumberGenerator implements OrderConfirmationNumberGenerator
+class RandomOrderConfirmationNumberGenerator implements OrderConfirmationNumberGenerator, InvitationCodeGenerator
 {
     protected $length = 24;
 
