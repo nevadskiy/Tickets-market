@@ -8,6 +8,7 @@ use App\Concert;
 use App\Facades\OrderConfirmationNumber;
 use App\Facades\TicketCode;
 use App\Mail\OrderConfirmationEmail;
+use App\User;
 use ConcertFactory;
 use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Http\Response;
@@ -46,7 +47,14 @@ class PurchaseTicketsTest extends TestCase
     /** @test */
     function customer_can_purchase_tickets_to_a_published_concert()
     {
-        $concert = ConcertFactory::createPublished(['ticket_price' => 3250, 'ticket_quantity' => 3]);
+        $this->withoutExceptionHandling();
+
+        $user = factory(User::class)->create(['stripe_account_id' => 'test_account_1234']);
+        $concert = ConcertFactory::createPublished([
+            'ticket_price' => 3250,
+            'ticket_quantity' => 3,
+            'user_id' => $user->id,
+        ]);
 
         // THE SAME LIKE ONE-LINE COMMAND BELOW THAT WORKS WITH ANY FACADE
         // $orderConfirmationNumberGenerator = Mockery::mock(OrderConfirmationNumberGenerator::class, [
@@ -76,7 +84,7 @@ class PurchaseTicketsTest extends TestCase
             ]
         ]);
 
-        $this->assertEquals(9750, $this->paymentGateway->totalCharges());
+        $this->assertEquals(9750, $this->paymentGateway->totalChargesFor('test_account_1234'));
         $this->assertTrue($concert->hasOrderFor('john@example.com'));
 
         $order = $concert->ordersFor('john@example.com')->first();

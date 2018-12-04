@@ -14,7 +14,7 @@ trait PaymentGatewayContractTests
         $paymentGateway = $this->getPaymentGateway();
 
         $recentCharges = $paymentGateway->duringCharges(function ($paymentGateway) {
-            $paymentGateway->charge(2500, $paymentGateway->getValidTestToken());
+            $paymentGateway->charge(2500, $paymentGateway->getValidTestToken(), 'test_account_1234');
         });
 
         $this->assertCount(1, $recentCharges);
@@ -26,10 +26,13 @@ trait PaymentGatewayContractTests
     {
         $paymentGateway = $this->getPaymentGateway();
 
-        $charge = $paymentGateway->charge(2500, $paymentGateway->getValidTestToken($paymentGateway::TEST_CARD_NUMBER));
+        $charge = $paymentGateway->charge(
+            2500, $paymentGateway->getValidTestToken($paymentGateway::TEST_CARD_NUMBER), 'test_account_1234'
+        );
 
         $this->assertEquals(substr($paymentGateway::TEST_CARD_NUMBER, -4), $charge->cardLastFour());
         $this->assertEquals(2500, $charge->amount());
+        $this->assertEquals('test_account_1234', $charge->destination());
     }
 
     /** @test */
@@ -37,12 +40,12 @@ trait PaymentGatewayContractTests
     {
         $paymentGateway = $this->getPaymentGateway();
 
-        $paymentGateway->charge(2000, $paymentGateway->getValidTestToken());
-        $paymentGateway->charge(3000, $paymentGateway->getValidTestToken());
+        $paymentGateway->charge(2000, $paymentGateway->getValidTestToken(), 'test_account_1234');
+        $paymentGateway->charge(3000, $paymentGateway->getValidTestToken(), 'test_account_1234');
 
         $recentCharges = $paymentGateway->duringCharges(function ($paymentGateway) {
-            $paymentGateway->charge(5000, $paymentGateway->getValidTestToken());
-            $paymentGateway->charge(4000, $paymentGateway->getValidTestToken());
+            $paymentGateway->charge(5000, $paymentGateway->getValidTestToken(), 'test_account_1234');
+            $paymentGateway->charge(4000, $paymentGateway->getValidTestToken(), 'test_account_1234');
         });
 
         $this->assertCount(2, $recentCharges);
@@ -56,7 +59,7 @@ trait PaymentGatewayContractTests
 
         $recentCharges = $paymentGateway->duringCharges(function ($paymentGateway) {
             try {
-                $paymentGateway->charge(1500, 'invalid-payment-token');
+                $paymentGateway->charge(1500, 'invalid-payment-token', 'test_account_1234');
             } catch (PaymentFailedException $e) {
                 return;
             }

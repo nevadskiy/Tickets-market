@@ -33,4 +33,12 @@ class Charge
     {
         return $this->data['amount'];
     }
+
+    /**
+     * @return mixed
+     */
+    public function destination()
+    {
+        return $this->data['destination'];
+    }
 }
