@@ -1,0 +1,1 @@
+<a href="{{ route('backstage.stripe-connect.authorize') }}">Connect with stripe</a>

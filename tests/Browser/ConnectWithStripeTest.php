@@ -21,8 +21,10 @@ class ConnectWithStripeTest extends DuskTestCase
         ]);
 
         $this->browse(function (Browser $browser) use ($user) {
+            // Browser part
             $browser->loginAs($user)
-                ->visit('/backstage/stripe-connect/authorize')
+                ->visit('/backstage/stripe-connect/connect')
+                ->clickLink('Connect with stripe')
                 ->assertUrlIs('https://connect.stripe.com/oauth/authorize')
                 ->assertQueryStringHas('response_type', 'code')
                 ->assertQueryStringHas('scope', 'read_write')
@@ -30,6 +32,7 @@ class ConnectWithStripeTest extends DuskTestCase
                 ->clickLink('Skip this account form')
                 ->assertRouteIs('backstage.concerts.index');
 
+            // Application assertions
             tap($user->fresh(), function ($user) {
                 $this->assertNotNull($user->stripe_account_id);
                 $this->assertNotNull($user->stripe_access_token);
