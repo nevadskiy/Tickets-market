@@ -11,7 +11,7 @@ Route::get('invitations/{code}', 'InvitationsController@show')->name('invitation
 Route::post('register', 'Auth\RegisterController@register')->name('auth.register');
 
 Route::group([
-    'middleware' => 'auth',
+//    'middleware' => 'auth',
     'prefix' => 'backstage',
     'as' => 'backstage.',
     'namespace' => 'Backstage',
@@ -27,5 +27,8 @@ Route::group([
 
     Route::get('concerts/{id}/messages/create', 'ConcertMessagesController@create')->name('concert-messages.create');
     Route::post('concerts/{id}/messages', 'ConcertMessagesController@store')->name('concert-messages.store');
+
+    Route::get('stripe-connect/authorize', 'StripeConnectController@authorizeRedirect');
+    Route::get('stripe-connect/redirect', 'StripeConnectController@redirect');
 });
 
